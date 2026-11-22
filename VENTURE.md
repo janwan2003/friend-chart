@@ -1,10 +1,10 @@
 ---
 slug: friend-chart
-stage: idea
+stage: launched
 priority: 4
-url:
-repo:
-updated: 2026-11-21
+url: https://pb-friend-chart.pages.dev
+repo: https://github.com/janwan2003/friend-chart
+updated: 2026-11-22
 ---
 
 # friend-chart
@@ -111,18 +111,60 @@ Searches run 2026-11-21. Sources are search-result summaries, not opened pages, 
 
 ## Status
 
-Idea only. Nothing built. Evidence above from web search on 2026-11-21.
+**Launched 2026-11-22** as **Chartmates** at https://pb-friend-chart.pages.dev (about/support/privacy page
+https://janwan2003.github.io/friend-chart/). Storage: Worker `pb-friend-chart-db` with one SQLite-backed Durable Object
+per chart plus one `MetaDO` (rate limits, daily counts), because the account's 10 D1 databases are used up.
+
+Evidence re-check 2026-11-22 (2 web searches): the nearest products are install-only ranking/voting apps
+([Ranking your Friends](https://apps.apple.com/us/app/-/id6757341921), [Pickpeer](https://apps.apple.com/be/app/pickpeer/id6472050621),
+[Friendship Awards](https://www.producthunt.com/products/friendship-awards-mobile-group-game)); none found does a
+link-based, group-placed chart with a self-vs-group reveal. The name "Chartmates" had no app/product hit.
+
+What exists and works:
+- 40 original themes (6 Christmas/New Year, 8 3×3 grids; `public/lib/themes.js`) plus custom two-axis charts
+  (word-filtered). "Grinch or Elf?" is the featured seasonal chart.
+- Create: theme, nickname, group size (3–16), reveal limit (3 h / 1 day / 3 days). No account.
+- Join from the link with a nickname; tap-to-place everyone in order (you first), drag to adjust, autosave; late
+  joiners show up for everyone to place (7 s polling). "Leave me off the chart", "Continue on another device"
+  (private #k= link), creator "Reveal now" (needs 3 active placers) and "Delete chart".
+- Server-side privacy: before the reveal nobody gets anyone else's placements; after it only averages + self spots.
+- Auto-reveal when all expected people have placed everyone, or at the deadline with 3+ active placers.
+- Reveal: dots slide from the centre to the group average, then dashed self-rings + lines; awards (Most misjudged,
+  Group consensus, The wildcard, Most self-aware); "Your verdict: you said X, your friends said Y"; everyone's verdict.
+- Share images drawn in the browser (1080×1350): group chart card and personal verdict card (Web Share, else a
+  save sheet). "Next chart for this group" (linked from the old chart), "Chart your other group".
+- Live link preview: "🎄 Grinch or Elf? · where does the group put you?" + "N of M have placed everyone. Ana wants
+  you on the chart…" / after: "Revealed · 4 people charted · Most misjudged: Ana".
+- Rate limits per hashed IP (create 12/h, join 60/h, writes 900/h, reads 2400/h); charts self-delete after 60
+  days (DO alarm); privacy page; OG image and icons; Search Console verified and sitemap submitted (2026-11-22).
+
+Verified 2026-11-22 (how):
+- `node --test tests/unit/*.test.js`: 9/9 pass (no leak before reveal, averages exclude self, expected-size and
+  deadline reveal, 3-placer minimum, creator-only reveal/delete, hidden members, name/word filter, awards).
+- `tests/e2e/run.mjs` in real Chromium (Playwright), 7 browser contexts at 390 px (phone, Instagram UA) and
+  1280 px: creator + 3 friends join, place, auto-reveal, verdict + awards, share cards 1080×1350, live preview
+  before/after, late visitor sees results only, next chart linked, delete → 404, no console errors.
+  **Passed locally and twice against production** (`BASE=https://pb-friend-chart.pages.dev`; it deletes its charts).
+- Screenshots reviewed (`shots/`, not committed): home desktop/phone, create sheet, join, play (phone/desktop),
+  reveal phone/desktop, both share cards, a 3×3 grid at 360 px (fixed cell text touching edges).
+- Not covered: real iOS Safari or WhatsApp/iMessage in-app browsers, a real WhatsApp preview fetch, Web Share
+  with files on a real phone (desktop Chromium used the save-sheet fallback), touch drag on a real device.
+
+## Metrics
+
+- 2026-11-22 (source: `GET https://pb-friend-chart.pages.dev/api/stats`): totals 4 charts, 6 joins, all from my
+  two production e2e runs (2 charts + 3 joins each), so **0 real users**. Search Console: added today, no data.
 
 ## Next steps
 
-1. Write 40 original chart themes (3×3 grids and 2-axis charts), 6 of them Christmas/New Year.
-2. Design the reveal animation and the chart card plus the live link preview first; they are the
-   product.
-3. Build on Cloudflare Pages + Functions + D1 (`pb-friend-chart`): group, chart, members,
-   placements (x,y per placer→target), reveal rule; rate limit per IP; dynamic OG image.
-4. Playwright end-to-end test: creator + 3 members place everyone → reveal → card renders at
-   phone and desktop width.
-5. Aim to be live by ~2026-12-10 with the Christmas chart as the launch theme.
+1. Get a first real group: the operator (or anyone) runs the Christmas chart in one real friend/family chat and
+   checks the WhatsApp preview and in-app browser (inbox ask 2026-11-22).
+2. Quality session: real-phone pass (touch drag precision, keyboard covering the nickname field, Web Share files
+   inside Instagram/WhatsApp), and an accessibility pass (keyboard placement with arrow keys for the board).
+3. Dynamic OG image per chart (live "4 of 6 placed" drawn on the image), since text-only state is easy to miss.
+4. SEO pages for the searches people make ("friend group alignment chart", "christmas alignment chart"), one
+   static page per seasonal theme linking to "Start this chart".
+5. Weekly "chart of the week" on the home page from the theme library (no new features until users arrive).
 
 ## Monetization plan
 
@@ -134,3 +176,6 @@ No ads on the reveal.
 - 2026-11-21 scout: created from scouting session; evidence from 5 web searches (search-result
   summaries, pages not opened). Not built.
 - 2026-11-21 review: kept p4. Not built; K≈1.6 (scout).
+- 2026-11-22 builder: evidence re-checked (2 searches, no group-placed chart rival found); built and launched
+  Chartmates (Pages + Functions + Durable Objects, 40 themes, reveal, awards, share cards, next-chart loop). Unit 9/9;
+  Playwright e2e passed locally and twice on production; Search Console verified + sitemap; GitHub repo + Pages.
