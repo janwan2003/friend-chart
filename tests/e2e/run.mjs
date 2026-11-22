@@ -24,20 +24,53 @@ async function page(opts, label) {
 }
 const shot = (p, name) => p.screenshot({ path: SHOTS + name + '.png', fullPage: true });
 
-/** Tap every unplaced person onto the board at positions given by fn(index). */
+const SMALL = { ...PHONE, viewport: { width: 360, height: 740 } };
+
+/** Tap every unplaced person onto the board at positions given by fn(index). Phones use real touch taps. */
 async function placeAll(p, fn) {
   const board = p.locator('.board');
   await board.waitFor();
+  const touch = p.context()._options?.hasTouch;
   for (let i = 0; i < 20; i++) {
     const ask = await p.locator('#ask').innerText();
     if (ask.startsWith('✅')) return;
     const box = await board.boundingBox();
     const [x, y] = fn(i);
-    await p.mouse.click(box.x + box.width * x, box.y + box.height * y);
+    if (touch) await p.touchscreen.tap(box.x + box.width * x, box.y + box.height * y);
+    else await p.mouse.click(box.x + box.width * x, box.y + box.height * y);
     await p.waitForTimeout(120);
   }
   throw new Error('could not place everyone');
 }
+
+/** Keyboard only: Enter places the highlighted person in the middle, arrows move them. */
+async function placeAllByKeyboard(p, moves) {
+  await p.locator('.board').focus();
+  for (let i = 0; i < 20; i++) {
+    const ask = await p.locator('#ask').innerText();
+    if (ask.startsWith('✅')) return;
+    for (const k of moves(i)) await p.keyboard.press(k);
+    await p.keyboard.press('Enter');
+    await p.waitForTimeout(80);
+  }
+  throw new Error('could not place everyone by keyboard');
+}
+
+/** Fails if the page scrolls sideways (something wider than the screen). */
+async function noSideScroll(p, label) {
+  const [sw, cw] = await p.evaluate(() => [document.documentElement.scrollWidth, document.documentElement.clientWidth]);
+  assert.ok(sw <= cw, `${label}: page is ${sw}px wide on a ${cw}px screen`);
+}
+
+/** Pairs of people whose dot or name tag covers another person's dot or name tag on the board. */
+const overlaps = (p) =>
+  p.evaluate(() => {
+    const boxes = [...document.querySelectorAll('.board .dot')].map((d) => ({ id: d.textContent, rs: [...d.querySelectorAll('.b, .n')].map((e) => e.getBoundingClientRect()) }));
+    const hit = (a, b) => a.left < b.right - 1 && b.left < a.right - 1 && a.top < b.bottom - 1 && b.top < a.bottom - 1;
+    const out = [];
+    for (let i = 0; i < boxes.length; i++) for (let j = i + 1; j < boxes.length; j++) if (boxes[i].rs.some((a) => boxes[j].rs.some((b) => hit(a, b)))) out.push(boxes[i].id + '/' + boxes[j].id);
+    return out;
+  });
 
 let id;
 try {
@@ -48,6 +81,26 @@ try {
   const homePhone = await page(PHONE, 'home-phone');
   await homePhone.goto(BASE + '/');
   await shot(homePhone, 'home-phone');
+  // Chart list is folded on phones and opens fully
+  assert.equal(await homePhone.locator('#picker .theme:visible').count() < 20, true);
+  await homePhone.click('#morecharts');
+  assert.equal(await homePhone.locator('#picker .theme:visible').count(), 41);
+  // Every same-origin link on the home and privacy pages works
+  for (const path of ['/', '/privacy']) {
+    await home.goto(BASE + path);
+    const hrefs = await home.evaluate(() => [...document.querySelectorAll('a[href]')].map((a) => a.href));
+    for (const href of new Set(hrefs)) {
+      if (!href.startsWith(BASE) || href.includes('#')) continue;
+      assert.equal((await fetch(href)).status, 200, `broken link ${href} on ${path}`);
+    }
+  }
+  // Unknown chart: a friendly page, not a blank screen
+  await home.goto(BASE + '/c/zzzzzzzz');
+  await home.getByText('Chart not found').waitFor();
+  // Small phone (360 px): no sideways scrolling on the home page
+  const small = await page(SMALL, 'small');
+  await small.goto(BASE + '/');
+  await noSideScroll(small, 'home 360');
 
   // 1. Creator (phone) makes the Christmas chart for 4 people
   const ana = await page(PHONE, 'ana');
@@ -68,6 +121,8 @@ try {
   const html = await (await fetch(`${BASE}/c/${id}`)).text();
   assert.match(html, /og:title" content="🎄 Grinch or Elf\? · where does the group put you\?"/);
   assert.match(html, /Ana wants you on the chart/);
+  // The creator gets an invite button right under the question, not only in the side card
+  await ana.locator('#askshare').waitFor();
 
   // 2. Three friends join (two phones, one desktop)
   const friends = [];
@@ -75,7 +130,10 @@ try {
     const p = await page(opts, name);
     await p.goto(`${BASE}/c/${id}`);
     await p.locator('#join').waitFor();
-    if (name === 'Ben') await shot(p, 'join-phone');
+    if (name === 'Ben') {
+      await shot(p, 'join-phone');
+      await noSideScroll(p, 'join 390');
+    }
     await p.fill('input[name=name]', name);
     await p.click('#join button');
     await p.locator('#ask').waitFor();
@@ -96,21 +154,38 @@ try {
   await placeAll(ana, (i) => [0.3 + i * 0.1, 0.6]);
 
   // Everyone else puts Ana as a Grinch who wings it (bottom-left) and others in the middle-ish.
+  // Cai (desktop) uses only the keyboard: Ana goes 8 steps left and 8 down from the middle.
   for (const { name, p } of friends) {
     await p.reload();
     await p.locator('#ask').waitFor();
+    if (name === 'Cai') {
+      await placeAllByKeyboard(p, (i) => (i === 1 ? [...Array(8).fill('ArrowLeft'), ...Array(8).fill('ArrowDown')] : i === 2 ? ['ArrowRight', 'ArrowUp'] : []));
+      await shot(p, 'play-desktop');
+      continue;
+    }
     await placeAll(p, (i) => {
       // order: self first, then members in join order (Ana first among others)
-      const ask = i;
-      return ask === 1 ? [0.1, 0.9] : [0.2 + 0.2 * i, 0.3 + 0.15 * i];
+      return i === 1 ? [0.1, 0.9] : [0.2 + 0.2 * i, 0.3 + 0.15 * i];
     });
-    if (name === 'Cai') await shot(p, 'play-desktop');
+  }
+  // Cai's keyboard placement of Ana reached the server as bottom-left
+  const caiPl = await friends[1].p.evaluate(async (cid) => {
+    const c = JSON.parse(localStorage.getItem('fc:' + cid));
+    const v = await (await fetch('/api/charts/' + cid, { headers: { 'x-token': c.token } })).json();
+    return v.me ? v.me.placements : null;
+  }, id);
+  if (caiPl) {
+    const anaId = Object.keys(caiPl).find((k) => caiPl[k][0] < 0.2);
+    assert.ok(anaId && caiPl[anaId][1] > 0.85, 'keyboard placement of Ana: ' + JSON.stringify(caiPl));
   }
   // Last save triggers the reveal. Wait for the results on Dev's page.
   const dev = friends[2].p;
   await dev.locator('.mine').waitFor({ timeout: 15000 });
   await dev.waitForTimeout(1800);
   await shot(dev, 'reveal-phone');
+  await noSideScroll(dev, 'reveal 390');
+  // Dots that land close together are spread apart so no name is hidden (dot is 40 px wide)
+  assert.deepEqual(await overlaps(dev), [], 'reveal dots or names overlap (390 px)');
 
   // Ana's view shows she is misjudged
   await ana.reload();
@@ -127,6 +202,7 @@ try {
   await cai.locator('.mine').waitFor();
   await cai.waitForTimeout(1600);
   await shot(cai, 'reveal-desktop');
+  assert.deepEqual(await overlaps(cai), [], 'reveal dots or names overlap (1280 px)');
 
   // Share cards render at 1080×1350
   const card = await cai.evaluate(async () => {
@@ -169,8 +245,25 @@ try {
   await ana.locator('.next[href]').waitFor();
   assert.equal(await ana.locator('.next[href]').getAttribute('href'), `/c/${nextId}`);
 
-  // 4. Creator deletes the next chart (cleanup), and the first one.
-  for (const [p, cid] of [[cai, nextId], [ana, id]]) {
+  // 3b. A custom chart with your own axes (made on a 360 px phone)
+  await small.goto(BASE + '/');
+  await small.click('#start');
+  await small.click('.sheet [data-theme="custom"]');
+  await small.fill('input[name=x0]', 'early bird');
+  await small.fill('input[name=x1]', 'night owl');
+  await small.fill('input[name=y0]', 'tidy');
+  await small.fill('input[name=y1]', 'chaos');
+  await small.fill('input[name=name]', 'Eve');
+  await small.click('button[type=submit]');
+  await small.waitForURL(/\/c\/[A-Za-z0-9]{8}$/);
+  const customId = small.url().split('/c/')[1];
+  await small.locator('.board .lbl.r').waitFor();
+  assert.equal(await small.locator('.board .lbl.r').innerText(), 'night owl');
+  await noSideScroll(small, 'play 360');
+  await shot(small, 'play-custom-360');
+
+  // 4. Creator deletes the charts (cleanup).
+  for (const [p, cid] of [[cai, nextId], [small, customId], [ana, id]]) {
     const r = await p.evaluate(async (c) => {
       const k = JSON.parse(localStorage.getItem('fc:' + c)).token;
       return (await fetch(`/api/charts/${c}/delete`, { method: 'POST', headers: { 'x-token': k }, body: '{}' })).status;

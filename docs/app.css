@@ -184,3 +184,42 @@ footer.foot a { color: var(--muted); margin-right: 14px; }
   .board .cell { font-size: 10px; }
 }
 .hidden { display: none !important; }
+
+/* ---- Polish pass 2026-11-22 ---- */
+.err:empty { display: none; }
+.row.nowrap { flex-wrap: nowrap; }
+:focus-visible { outline: 3px solid var(--violet); outline-offset: 2px; }
+.board:focus-visible { outline-offset: 4px; }
+.ask { flex-wrap: wrap; }
+.ask .chip { vertical-align: middle; cursor: default; }
+.eyebrow { font-size: 12.5px; font-weight: 800; letter-spacing: 0.08em; text-transform: uppercase; opacity: 0.8; }
+
+/* Options: quiet list rows instead of underlined links */
+.menu { flex-direction: column; gap: 0; margin-top: 6px; }
+.menu .linkbtn { text-decoration: none; text-align: left; padding: 11px 0; border-bottom: 1px solid var(--line); color: var(--ink); font-weight: 650; width: 100%; }
+.menu .linkbtn:last-of-type { border-bottom: 0; }
+.menu .linkbtn[disabled] { color: var(--muted); cursor: default; }
+.menu .linkbtn.danger { color: #c92a2a; }
+.menu .note { font-size: 13px; color: var(--muted); margin: -8px 0 6px; }
+
+/* Results: board + everyone's verdict on the left, my verdict and awards on the right */
+.results-grid { display: grid; grid-template-columns: minmax(0, 1fr); gap: 16px; }
+.legend { display: flex; flex-wrap: wrap; gap: 6px 16px; align-items: center; font-size: 13.5px; color: var(--muted); font-weight: 600; margin-top: -4px; }
+.legend span { display: inline-flex; align-items: center; gap: 6px; }
+.legend .lg-dot { width: 12px; height: 12px; border-radius: 50%; background: var(--ink); border: 2px solid #fff; box-shadow: 0 0 0 1px var(--line); }
+.legend .lg-ring { width: 12px; height: 12px; border-radius: 50%; border: 2px dashed var(--muted); }
+.legend .linkbtn { margin-left: auto; font-size: 14px; }
+@media (min-width: 900px) {
+  .results-grid { grid-template-columns: minmax(0, 560px) minmax(0, 1fr); align-items: start; }
+  .results-grid .r-main { grid-column: 1; grid-row: 1; }
+  .results-grid .r-all { grid-column: 1; grid-row: 2; }
+  .results-grid .r-side { grid-column: 2; grid-row: 1 / span 2; position: sticky; top: 16px; }
+  .results-grid .awards { grid-template-columns: 1fr; }
+}
+
+/* Home: the full chart list is in the page, folded on phones */
+.more-charts { display: none; }
+@media (max-width: 760px) {
+  #picker.folded .picker > h3:nth-of-type(n + 3), #picker.folded .picker > .themes:nth-of-type(n + 3) { display: none; }
+  #picker.folded + .more-charts { display: flex; margin-top: 14px; }
+}

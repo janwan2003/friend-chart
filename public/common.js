@@ -132,6 +132,45 @@ export function setPos(el, p) {
   el.style.left = `${toView(p[0]) * 100}%`;
   el.style.top = `${toView(p[1]) * 100}%`;
 }
+/**
+ * Nudges points apart so dots and name tags do not cover each other (display only; the data is untouched).
+ * `pts` are [x, y] in 0..1. Two points need `minD` of room side by side, and `minD / ky` above each
+ * other, because each name tag hangs below its dot.
+ */
+export function spreadOut(pts, minD, ky = 0.72) {
+  const out = pts.map((p) => [p[0], p[1] * ky]);
+  const maxY = ky;
+  for (let it = 0; it < 150; it++) {
+    let moved = false;
+    for (let i = 0; i < out.length; i++) {
+      for (let j = i + 1; j < out.length; j++) {
+        let dx = out[j][0] - out[i][0];
+        let dy = out[j][1] - out[i][1];
+        let d = Math.hypot(dx, dy);
+        if (d >= minD - 1e-6) continue;
+        if (d < 1e-6) {
+          const a = i * 2.4 + j * 1.3; // identical spots: fan out in a fixed direction
+          dx = Math.cos(a);
+          dy = Math.sin(a);
+          d = 1;
+        }
+        const push = (minD - Math.hypot(out[j][0] - out[i][0], out[j][1] - out[i][1])) / 2 + 1e-5;
+        out[i][0] -= (dx / d) * push;
+        out[i][1] -= (dy / d) * push;
+        out[j][0] += (dx / d) * push;
+        out[j][1] += (dy / d) * push;
+        moved = true;
+      }
+    }
+    for (const p of out) {
+      p[0] = Math.min(1, Math.max(0, p[0]));
+      p[1] = Math.min(maxY, Math.max(0, p[1]));
+    }
+    if (!moved) break;
+  }
+  return out.map((p) => [p[0], p[1] / ky]);
+}
+
 export function boardPoint(board, clientX, clientY) {
   const r = board.getBoundingClientRect();
   return [fromView((clientX - r.left) / r.width), fromView((clientY - r.top) / r.height)];
@@ -244,25 +283,31 @@ function drawChart(ctx, theme, x, y, size, pts, { rings = true } = {}) {
     ctx.restore();
   }
   const P = (v) => toView(v) * size;
+  const shown = spreadOut(pts.map((q) => q.p), 88 / (size * (1 - 2 * PAD)), 0.66);
   if (rings) {
-    for (const { m, p, self } of pts) {
-      if (!self) continue;
+    for (let i = 0; i < pts.length; i++) {
+      const { m, p, self } = pts[i];
+      const q = shown[i];
       ctx.strokeStyle = m.color;
       ctx.globalAlpha = 0.8;
       ctx.setLineDash([8, 8]);
       ctx.lineWidth = 4;
-      ctx.beginPath();
-      ctx.moveTo(x + P(self[0]), y + P(self[1]));
-      ctx.lineTo(x + P(p[0]), y + P(p[1]));
-      ctx.stroke();
-      ctx.beginPath();
-      ctx.arc(x + P(self[0]), y + P(self[1]), 22, 0, Math.PI * 2);
-      ctx.stroke();
+      if (self) {
+        ctx.beginPath();
+        ctx.moveTo(x + P(self[0]), y + P(self[1]));
+        ctx.lineTo(x + P(q[0]), y + P(q[1]));
+        ctx.stroke();
+        ctx.beginPath();
+        ctx.arc(x + P(self[0]), y + P(self[1]), 22, 0, Math.PI * 2);
+        ctx.stroke();
+      }
       ctx.setLineDash([]);
       ctx.globalAlpha = 1;
     }
   }
-  for (const { m, p } of pts) {
+  for (let i = 0; i < pts.length; i++) {
+    const { m } = pts[i];
+    const p = shown[i];
     const cx = x + P(p[0]);
     const cy = y + P(p[1]);
     ctx.fillStyle = 'rgba(0,0,0,0.18)';

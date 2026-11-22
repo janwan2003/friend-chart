@@ -22,7 +22,7 @@ export function openCreate({ prev = null, prevToken = null, themeId = null } = {
     const t = chosen === 'custom' ? null : themeById(chosen);
     box.innerHTML = `<div class="sheet-head"><button class="linkbtn" data-back>← Charts</button><button class="x" aria-label="Close">×</button></div>
       <form class="stack" novalidate>
-        ${t ? `<div class="row"><span style="font-size:40px">${t.emoji}</span><div><h2>${esc(t.title)}</h2><div class="muted small">${esc(axisSummary(t))}${t.kind === 'axes' ? ` · ${esc(t.y[0])} ↔ ${esc(t.y[1])}` : ''}</div></div></div>`
+        ${t ? `<div class="row nowrap"><span style="font-size:40px;flex:none">${t.emoji}</span><div><h2>${esc(t.title)}</h2><div class="muted small">${esc(axisSummary(t))}${t.kind === 'axes' ? ` · ${esc(t.y[0])} ↔ ${esc(t.y[1])}` : ''}</div></div></div>`
           : `<h2>Your own chart</h2>
           <label class="field">Left ↔ right <span class="hint">(e.g. early bird ↔ night owl)</span>
             <div class="row" style="flex-wrap:nowrap"><input type="text" name="x0" maxlength="${LIM.label}" placeholder="early bird" required><input type="text" name="x1" maxlength="${LIM.label}" placeholder="night owl" required></div></label>

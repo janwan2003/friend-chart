@@ -1,5 +1,5 @@
 // The chart page: join, place everyone, wait, reveal.
-import { $, esc, h, api, ident, toast, shareLink, copy, buildBoard, dotEl, setPos, boardPoint, toView, groupCard, meCard, shareCanvas } from './common.js';
+import { $, esc, h, api, ident, toast, shareLink, copy, buildBoard, dotEl, setPos, boardPoint, toView, spreadOut, groupCard, meCard, shareCanvas } from './common.js';
 import { describe } from './lib/chart.js';
 import { openCreate } from './create.js';
 
@@ -200,12 +200,14 @@ function updatePlay() {
   const all = order().every((m) => pl[m.id]);
   $('#ask').innerHTML = cur
     ? cur.id === view.me.id
-      ? `<span class="chip cur"><span class="av" style="background:${esc(cur.color)}">${esc(cur.emoji)}</span>You</span> Where do you put yourself?`
-      : `Where does <span class="chip cur"><span class="av" style="background:${esc(cur.color)}">${esc(cur.emoji)}</span>${esc(cur.name)}</span> go?`
-    : all && order().length > 1
+      ? `<span>Where do you put <span class="chip cur"><span class="av" style="background:${esc(cur.color)}">${esc(cur.emoji)}</span>yourself</span>?</span>`
+      : `<span>Where does <span class="chip cur"><span class="av" style="background:${esc(cur.color)}">${esc(cur.emoji)}</span>${esc(cur.name)}</span> go?</span>`
+    : all && order().length > 1 && view.groupSize <= view.members.length
       ? '✅ Everyone placed. Drag to adjust until the reveal.'
-      : '✅ You’re placed. Waiting for friends to join…';
+      : `<span>✅ ${order().length > 1 ? 'Everyone so far is placed.' : 'You’re placed.'} Now get the group in.</span><button class="btn small" type="button" id="askshare">Invite friends</button>`;
   $('#taphint').classList.toggle('hidden', !cur || Object.keys(pl).length > 1);
+  if ($('#askshare')) $('#askshare').onclick = () => shareLink({ title: `${view.theme.title} · Chartmates`, text: inviteText(), url: url() });
+  boardEl.setAttribute('aria-label', `${view.theme.title} chart. ${cur ? `Placing ${cur.id === view.me.id ? 'yourself' : cur.name}: use the arrow keys to move, Enter to confirm.` : 'Everyone is placed.'}`);
   // Tray
   $('#tray').innerHTML = order().map((m) => `<button type="button" class="chip ${m.id === current ? 'cur' : ''} ${pl[m.id] ? 'placed' : ''}" data-id="${m.id}"><span class="av" style="background:${esc(m.color)}">${esc(m.emoji)}</span>${m.id === view.me.id ? 'You' : esc(m.name)}</button>`).join('');
   $('#tray').querySelectorAll('.chip').forEach((c) => (c.onclick = () => ((current = c.dataset.id), updatePlay())));
@@ -222,8 +224,8 @@ function updatePlay() {
   $('#menu').innerHTML = `${mm.isCreator ? `<button class="linkbtn" id="revealnow" ${view.canReveal ? '' : 'disabled title="At least 3 people need to place first"'}>Reveal now</button>` : ''}
     <button class="linkbtn" id="hideme">${mm.hidden ? 'Put me back on the chart' : 'Leave me off the chart'}</button>
     <button class="linkbtn" id="device">Continue on another device</button>
-    ${mm.isCreator ? '<button class="linkbtn" id="del" style="color:#c92a2a">Delete chart</button>' : ''}`;
-  if (mm.isCreator && !view.canReveal) $('#revealnow').insertAdjacentHTML('afterend', '<span class="muted small" style="align-self:center">(after 3 people have placed)</span>');
+    ${mm.isCreator ? '<button class="linkbtn danger" id="del">Delete chart</button>' : ''}`;
+  if (mm.isCreator && !view.canReveal) $('#revealnow').insertAdjacentHTML('afterend', '<span class="note">Available once 3 people have placed their friends</span>');
   const err = (e) => ($('#menuerr').textContent = e.message);
   if ($('#revealnow')) $('#revealnow').onclick = async () => {
     if (!view.canReveal) return;
@@ -262,6 +264,25 @@ function updatePlay() {
 
 function bindBoard() {
   let drag = null;
+  // Keyboard: arrow keys move the highlighted person (placing them in the middle first), Enter moves on.
+  boardEl.tabIndex = 0;
+  boardEl.addEventListener('keydown', (e) => {
+    const step = e.shiftKey ? 0.15 : 0.05;
+    const dirs = { ArrowLeft: [-step, 0], ArrowRight: [step, 0], ArrowUp: [0, -step], ArrowDown: [0, step] };
+    if (!current && dirs[e.key]) current = order()[0] && order()[0].id;
+    if (!current) return;
+    if (dirs[e.key]) {
+      const p = pl[current] || [0.5, 0.5];
+      pl[current] = [Math.min(1, Math.max(0, p[0] + dirs[e.key][0])), Math.min(1, Math.max(0, p[1] + dirs[e.key][1]))];
+      e.preventDefault();
+      changed();
+    } else if (e.key === 'Enter' || e.key === ' ') {
+      if (!pl[current]) pl[current] = [0.5, 0.5];
+      current = nextUnplaced();
+      e.preventDefault();
+      changed();
+    }
+  });
   boardEl.addEventListener('pointerdown', (e) => {
     const d = e.target.closest('.dot');
     const p = boardPoint(boardEl, e.clientX, e.clientY);
@@ -356,35 +377,41 @@ function renderResults(animate) {
     : view.me
       ? `<div class="card next stack"><b style="font-size:18px">Again? Start the next chart for this group</b><p class="muted small" style="margin:0">Everyone here sees it on this page.</p><button class="btn" id="nextbtn">Pick the next chart</button></div>`
       : '';
-  app.innerHTML = `<div class="play-grid"><div>${headHtml()}
+  app.innerHTML = `<div class="results-grid">
+    <div class="r-main">${headHtml()}
       <div id="boardwrap"></div>
-      <div class="row" style="margin-top:10px;justify-content:space-between"><span class="muted small">Dot = where the group put them · dashed ring = where they put themselves</span><button class="linkbtn" id="ringsbtn">Hide rings</button></div>
+      <div class="legend"><span><i class="lg-dot"></i>where the group put them</span><span><i class="lg-ring"></i>where they put themselves</span><button class="linkbtn" id="ringsbtn">Hide rings</button></div>
     </div>
-    <div class="side stack">
-      ${words ? `<div class="card mine stack"><div class="muted small" style="font-weight:700">YOUR VERDICT</div><div class="big">You said: ${esc(words.self)}.<br>Your friends said: ${esc(words.group)}.</div><button class="btn secondary" id="sharemine">Share my result</button></div>` : ''}
+    <div class="r-side stack">
+      ${words ? `<div class="card mine stack"><div class="eyebrow">Your verdict</div><div class="big">You said: ${esc(words.self)}.<br>Your friends said: ${esc(words.group)}.</div><button class="btn secondary" id="sharemine">Share my result</button></div>` : ''}
       ${view.awards.length ? `<div class="awards">${view.awards.map(award).join('')}</div>` : ''}
       <div class="row"><button class="btn" id="sharechart">Share the chart</button><button class="btn ghost" id="copylink">Copy link</button></div>
       ${nextHtml}
+    </div>
+    <div class="r-all stack">
       <div class="card"><b>Everyone's verdict</b><div class="verdicts">${view.results.map((r) => `<div class="v"><span class="av" style="background:${esc(r.color)}">${esc(r.emoji)}</span><div><b>${esc(r.name)}</b><br>${r.avg ? `Group: ${esc(describe(view.theme, r.avg))}` : '<span class="muted">Nobody placed them</span>'}${r.self ? `<br><span class="muted">Self: ${esc(describe(view.theme, r.self))}</span>` : ''}</div></div>`).join('')}</div></div>
       <div class="card stack center"><b style="font-size:18px">Got another group chat?</b><p class="muted small" style="margin:0">Family, work, the other friends. Takes 30 seconds.</p><button class="btn ghost" id="other">Chart your other group</button></div>
     </div></div>`;
   boardEl = buildBoard(view.theme);
   boardEl.classList.add('reveal');
   $('#boardwrap').append(boardEl);
+  // Dots that land on the same spot are nudged apart so every name stays readable.
+  const shown = spreadOut(res.map((r) => r.avg), 48 / (Math.max(200, boardEl.clientWidth) * (1 - 2 * 0.07)));
   const links = [];
-  for (const r of res) {
+  res.forEach((r, i) => {
     if (r.self) {
       const ring = h(`<div class="ring" style="border-color:${esc(r.color)}"></div>`);
       setPos(ring, r.self);
       boardEl.append(ring);
-      links.push(`<line x1="${toView(r.self[0]) * 100}" y1="${toView(r.self[1]) * 100}" x2="${toView(r.avg[0]) * 100}" y2="${toView(r.avg[1]) * 100}" stroke="${esc(r.color)}" stroke-width="2" stroke-dasharray="5 5" vector-effect="non-scaling-stroke"/>`);
+      links.push(`<line x1="${toView(r.self[0]) * 100}" y1="${toView(r.self[1]) * 100}" x2="${toView(shown[i][0]) * 100}" y2="${toView(shown[i][1]) * 100}" stroke="${esc(r.color)}" stroke-width="2" stroke-dasharray="5 5" vector-effect="non-scaling-stroke"/>`);
     }
     const d = dotEl(r);
-    setPos(d, animate ? [0.5, 0.5] : r.avg);
+    d.title = `${r.name}: ${describe(view.theme, r.avg)}`;
+    setPos(d, animate ? [0.5, 0.5] : shown[i]);
     boardEl.append(d);
-  }
+  });
   boardEl.prepend(h(`<svg class="links" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true">${links.join('')}</svg>`));
-  const place = () => res.forEach((r) => setPos(boardEl.querySelector(`.dot[data-id="${r.id}"]`), r.avg));
+  const place = () => res.forEach((r, i) => setPos(boardEl.querySelector(`.dot[data-id="${r.id}"]`), shown[i]));
   if (animate) {
     requestAnimationFrame(() => requestAnimationFrame(place));
     setTimeout(() => boardEl.classList.add('rings'), 1300);

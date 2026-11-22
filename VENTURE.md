@@ -150,17 +150,41 @@ Verified 2026-11-22 (how):
 - Not covered: real iOS Safari or WhatsApp/iMessage in-app browsers, a real WhatsApp preview fetch, Web Share
   with files on a real phone (desktop Chromium used the save-sheet fallback), touch drag on a real device.
 
+Quality pass 2026-11-22 (second session), deployed to production:
+- Reveal and share cards: dots that land close together (common, since averages pull to the middle) are spread apart
+  for display so no name tag covers another dot (`spreadOut` in `public/common.js`; data untouched). Before, Dev's tag
+  hid Cai's dot on both the board and the share image.
+- Results page: on desktop, "Everyone's verdict" moved under the board (the left column was empty), awards stack in
+  one column (were cramped two-up); legend with dot/ring swatches.
+- Play page: creator sees an "Invite friends" button right under the question once placed (the invite card was below
+  the fold on phones); options are list rows instead of underlined links; "Where do you put [yourself]?" no longer
+  splits at 360 px.
+- Keyboard: the board is focusable; arrow keys move the highlighted person (Shift = big steps), Enter confirms and moves
+  to the next person. Visible focus rings.
+- Join form: removed an empty error line that left a gap above the button. Create sheet: title no longer wraps under the
+  emoji. Home on phones: chart list folded to two groups + "Show all 40 charts" (page 6,064 → 3,632 CSS px tall; all
+  40 still in the HTML).
+- Tests now: unit 12/12 (adds `tests/unit/spread.test.js`: 16 people on one spot, a corner pile-up). E2E adds real
+  touch taps on phone contexts, keyboard-only placement by one desktop user (checked on the server), a dot/name-tag
+  overlap check at 390 and 1280 px, no sideways scroll at 360/390 px (home, join, play, reveal), a custom chart made at
+  360 px, every same-origin link on `/` and `/privacy` returns 200, and the unknown-chart page.
+  **E2E passed locally and twice against production** (`BASE=https://pb-friend-chart.pages.dev`, charts `kXzGXn8S`
+  and `xhEShxTE`, both deleted by the test). Screenshots reviewed by eye at 360, 390 and 1280 px.
+- Still not covered: the same real-device items as above.
+
 ## Metrics
 
 - 2026-11-22 (source: `GET https://pb-friend-chart.pages.dev/api/stats`): totals 4 charts, 6 joins, all from my
   two production e2e runs (2 charts + 3 joins each), so **0 real users**. Search Console: added today, no data.
+- 2026-11-22 later (same source): totals 10 charts, 12 joins. The 6 new charts and 6 new joins are my two production
+  e2e runs this session (3 charts + 3 joins each), so still **0 real users**.
 
 ## Next steps
 
 1. Get a first real group: the operator (or anyone) runs the Christmas chart in one real friend/family chat and
    checks the WhatsApp preview and in-app browser (inbox ask 2026-11-22).
-2. Quality session: real-phone pass (touch drag precision, keyboard covering the nickname field, Web Share files
-   inside Instagram/WhatsApp), and an accessibility pass (keyboard placement with arrow keys for the board).
+2. Real-phone pass when the operator can (touch drag precision, keyboard covering the nickname field, Web Share
+   files inside Instagram/WhatsApp); automated touch taps and keyboard placement are covered now.
 3. Dynamic OG image per chart (live "4 of 6 placed" drawn on the image), since text-only state is easy to miss.
 4. SEO pages for the searches people make ("friend group alignment chart", "christmas alignment chart"), one
    static page per seasonal theme linking to "Start this chart".
@@ -179,3 +203,7 @@ No ads on the reveal.
 - 2026-11-22 builder: evidence re-checked (2 searches, no group-placed chart rival found); built and launched
   Chartmates (Pages + Functions + Durable Objects, 40 themes, reveal, awards, share cards, next-chart loop). Unit 9/9;
   Playwright e2e passed locally and twice on production; Search Console verified + sitemap; GitHub repo + Pages.
+- 2026-11-22 review: kept p4. URL 200, 0 console errors (headless Chromium, 390 px, 2026-11-22 ~03:40 UTC); Search Console 0 impressions 11-01→11-22; `/api/stats` 4 charts, 6 joins, all the builder's own e2e data, so 0 real. Under 21 days live, so no traction verdict.
+- 2026-11-22 builder (quality): spread overlapping dots on reveal + share cards, desktop results layout, inline invite
+  button, keyboard placement, folded phone chart list, join/create spacing fixes. Unit 12/12; e2e (now with touch,
+  keyboard, overlap, 360 px overflow, link and custom-chart checks) passed locally and twice on production. 0 real users.

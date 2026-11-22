@@ -8,5 +8,5 @@ A friend group alignment chart, voted by the group: https://pb-friend-chart.page
 - `lib/store.js` chart state machine. `docs/` GitHub Pages about/privacy page.
 
 Dev: `pnpm dev:db` and `pnpm dev` (with `TEST_HOOKS=1` in `.dev.vars` / `worker/.dev.vars`), then
-`pnpm test:unit` and `pnpm test:e2e` (`BASE=https://pb-friend-chart.pages.dev` for production).
+`pnpm test:unit` and `pnpm test:e2e` (real Chromium: phone touch, keyboard, overlap and 360 px checks; screenshots in `shots/`) (`BASE=https://pb-friend-chart.pages.dev` for production).
 Deploy: `cd worker && wrangler deploy`, then `wrangler pages deploy public --project-name pb-friend-chart --branch main`.
