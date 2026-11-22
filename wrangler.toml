@@ -1,0 +1,15 @@
+name = "pb-friend-chart"
+pages_build_output_dir = "public"
+compatibility_date = "2025-11-01"
+
+# Storage lives in the Durable Objects of the Worker pb-friend-chart-db (worker/), because the account
+# is at the free plan's 10 D1 databases.
+[[durable_objects.bindings]]
+name = "CHARTS"
+class_name = "ChartDO"
+script_name = "pb-friend-chart-db"
+
+[[durable_objects.bindings]]
+name = "META"
+class_name = "MetaDO"
+script_name = "pb-friend-chart-db"

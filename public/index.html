@@ -1,0 +1,108 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Chartmates · friend group alignment chart where your friends place you</title>
+<meta name="description" content="Make an alignment chart of your friend group, voted by the group. Everyone places everyone on a funny chart, then the group verdict is revealed: where you put yourself vs where your friends put you. Free, no sign-up, no app.">
+<link rel="canonical" href="https://pb-friend-chart.pages.dev/">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="Chartmates">
+<meta property="og:title" content="Chartmates · your friends put you on the chart">
+<meta property="og:description" content="A friend group alignment chart, voted by the group. Place everyone, then see where they put you. No sign-up.">
+<meta property="og:url" content="https://pb-friend-chart.pages.dev/">
+<meta property="og:image" content="https://pb-friend-chart.pages.dev/og.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="theme-color" content="#fff8f1">
+<link rel="icon" href="/icon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="/icon-180.png">
+<link rel="manifest" href="/manifest.webmanifest">
+<link rel="stylesheet" href="/app.css">
+<script type="application/ld+json">{"@context":"https://schema.org","@type":"WebApplication","name":"Chartmates","url":"https://pb-friend-chart.pages.dev/","applicationCategory":"GameApplication","operatingSystem":"Any","offers":{"@type":"Offer","price":"0","priceCurrency":"USD"},"description":"A friend group alignment chart where the group places each other and the verdict is revealed."}</script>
+</head>
+<body>
+<div class="wrap">
+  <header class="top">
+    <a class="brand" href="/"><img src="/icon.svg" alt="" width="30" height="30">Chartmates</a>
+    <nav><a class="hide-sm" href="#how">How it works</a><a class="hide-sm" href="#charts">Charts</a><a href="#faq">FAQ</a></nav>
+  </header>
+
+  <section class="hero">
+    <div>
+      <span class="pill">🎄 New: the Grinch-or-Elf Christmas chart</span>
+      <h1 style="margin-top:14px">Your friends put you <em>on the chart</em>.</h1>
+      <p class="lead">The alignment chart meme, voted by your group. Everyone places everyone on a funny chart, in secret. Then it reveals: where you put yourself, and where your friends put you.</p>
+      <div class="row">
+        <button class="btn" id="start">Start a chart</button>
+        <button class="btn ghost" id="xmas">🎄 Grinch or Elf?</button>
+      </div>
+      <p class="trust">Free · no sign-up · no app · works in any group chat</p>
+    </div>
+    <svg class="art" viewBox="0 0 400 400" role="img" aria-label="Example chart: friends placed between full Grinch and full Elf">
+      <defs><linearGradient id="hg" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#fff4ec"/><stop offset="1" stop-color="#f1edff"/></linearGradient>
+      <filter id="sh" x="-30%" y="-30%" width="160%" height="160%"><feDropShadow dx="0" dy="3" stdDeviation="4" flood-opacity=".22"/></filter></defs>
+      <rect x="6" y="6" width="388" height="388" rx="30" fill="url(#hg)" stroke="#ece4da" stroke-width="2"/>
+      <path d="M200 6v388M6 200h388" stroke="#ddd3e8" stroke-width="2"/>
+      <g font-family="system-ui,sans-serif" font-weight="800" font-size="14" fill="#4b4560" text-anchor="middle">
+        <rect x="140" y="16" width="120" height="26" rx="13" fill="#fff"/><text x="200" y="34">plans everything</text>
+        <rect x="160" y="358" width="80" height="26" rx="13" fill="#fff"/><text x="200" y="376">wings it</text>
+        <rect x="14" y="187" width="96" height="26" rx="13" fill="#fff"/><text x="62" y="205">full Grinch</text>
+        <rect x="300" y="187" width="80" height="26" rx="13" fill="#fff"/><text x="340" y="205">full Elf</text>
+      </g>
+      <g stroke-width="3" stroke-dasharray="6 6" fill="none" opacity=".8">
+        <path d="M312 116 L118 292" stroke="#e4572e"/><circle cx="312" cy="116" r="17" stroke="#e4572e"/>
+        <path d="M150 110 L170 130" stroke="#2a9d8f"/><circle cx="150" cy="110" r="17" stroke="#2a9d8f"/>
+      </g>
+      <g filter="url(#sh)" font-size="22" text-anchor="middle">
+        <circle cx="118" cy="292" r="24" fill="#fff"/><circle cx="118" cy="292" r="20" fill="#e4572e"/><text x="118" y="300">🦊</text>
+        <circle cx="170" cy="130" r="24" fill="#fff"/><circle cx="170" cy="130" r="20" fill="#2a9d8f"/><text x="170" y="138">🐸</text>
+        <circle cx="318" cy="270" r="24" fill="#fff"/><circle cx="318" cy="270" r="20" fill="#7b61ff"/><text x="318" y="278">🐙</text>
+        <circle cx="262" cy="150" r="24" fill="#fff"/><circle cx="262" cy="150" r="20" fill="#f2a541"/><text x="262" y="158">🦄</text>
+      </g>
+      <g font-family="system-ui,sans-serif" font-weight="800" font-size="13" fill="#fff" text-anchor="middle">
+        <rect x="96" y="318" width="44" height="20" rx="10" fill="#1f1b2e"/><text x="118" y="332">Sam</text>
+        <rect x="150" y="156" width="40" height="20" rx="10" fill="#1f1b2e"/><text x="170" y="170">Ana</text>
+        <rect x="298" y="296" width="40" height="20" rx="10" fill="#1f1b2e"/><text x="318" y="310">Leo</text>
+        <rect x="240" y="176" width="44" height="20" rx="10" fill="#1f1b2e"/><text x="262" y="190">Maya</text>
+      </g>
+      <g font-family="system-ui,sans-serif" font-weight="800" font-size="14">
+        <rect x="214" y="58" width="172" height="28" rx="14" fill="#ff5a36"/><text x="300" y="77" fill="#fff" text-anchor="middle">Sam: “I’m an elf!” 🙃</text>
+      </g>
+    </svg>
+  </section>
+
+  <section class="block" id="how">
+    <h2>How it works</h2>
+    <div class="steps">
+      <div class="card"><div class="num">1</div><b>Pick a chart, send the link</b><span class="muted">Choose from 40 charts (or write your own axes) and drop the link in the group chat.</span></div>
+      <div class="card"><div class="num">2</div><b>Everyone places everyone</b><span class="muted">Friends open the link, type a nickname and tap where each person belongs. Nobody sees anyone else's answers.</span></div>
+      <div class="card"><div class="num">3</div><b>The big reveal</b><span class="muted">When everyone's in, the dots slide to the group's verdict, with a ring where each person put themselves. Awards, too.</span></div>
+    </div>
+  </section>
+
+  <section class="block" id="charts">
+    <h2>40 charts to argue about</h2>
+    <p class="muted" style="margin-top:-6px">Tap one to start. Every chart is playful by design: no charts about looks.</p>
+    <div id="picker"></div>
+  </section>
+
+  <section class="block faq" id="faq">
+    <h2>Questions</h2>
+    <details><summary>What is a friend group alignment chart?</summary><p>It's the meme where a friend group gets sorted onto a 3×3 grid (lawful good to chaotic evil) or onto two silly axes. Usually one person makes it and everyone argues. Here, the whole group votes, and each person's spot is the average of where their friends put them.</p></details>
+    <details><summary>Can people see where I put them?</summary><p>No. Before the reveal nobody sees anyone's answers. After the reveal you only see the group's average for each person and where each person put themselves, never who put whom where.</p></details>
+    <details><summary>When does the chart reveal?</summary><p>As soon as everyone in the group has placed everyone, or at the time limit the creator picked (3 hours, 1 day or 3 days), as long as at least 3 people have taken part. The creator can also reveal it early.</p></details>
+    <details><summary>Do we need to sign up or install anything?</summary><p>No. Open the link, type a nickname, done. It works in WhatsApp, iMessage, Instagram and Messenger browsers, on any phone or computer.</p></details>
+    <details><summary>Can I stay off the chart?</summary><p>Yes. Anyone can tap "Leave me off the chart" before the reveal and still place their friends. The creator can delete the chart at any time, and every chart is deleted automatically after 60 days.</p></details>
+    <details><summary>Is it free?</summary><p>Yes, free, with no ads and no account.</p></details>
+  </section>
+
+  <footer class="foot">
+    <p><a href="/privacy">Privacy</a><a href="https://janwan2003.github.io/friend-chart/">About</a><a href="https://github.com/janwan2003/friend-chart/issues">Support</a></p>
+    <p>Chartmates is a free game for friend groups. No account, no tracking, no ads.</p>
+  </footer>
+</div>
+<script type="module" src="/home.js"></script>
+</body>
+</html>

@@ -1,0 +1,16 @@
+name = "pb-friend-chart-db"
+main = "index.js"
+compatibility_date = "2025-11-01"
+workers_dev = false
+
+[[durable_objects.bindings]]
+name = "CHARTS"
+class_name = "ChartDO"
+
+[[durable_objects.bindings]]
+name = "META"
+class_name = "MetaDO"
+
+[[migrations]]
+tag = "v1"
+new_sqlite_classes = ["ChartDO", "MetaDO"]

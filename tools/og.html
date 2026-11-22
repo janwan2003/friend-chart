@@ -1,0 +1,12 @@
+<!doctype html><html><head><meta charset="utf-8"><style>
+body{margin:0;width:1200px;height:630px;background:#fff8f1;font-family:ui-rounded,system-ui,'Segoe UI',Roboto,sans-serif;color:#1f1b2e;display:flex;align-items:center;overflow:hidden}
+.l{padding:0 0 0 70px;width:620px}.brand{display:flex;align-items:center;gap:14px;font-weight:800;font-size:34px}
+h1{font-size:68px;line-height:1.02;letter-spacing:-.03em;margin:26px 0 18px}h1 em{font-style:normal;color:#ff5a36}
+p{font-size:27px;color:#4b4560;margin:0;line-height:1.35}.r{flex:1;display:flex;justify-content:center}
+</style></head><body><div class="l"><div class="brand"><img src="../public/icon.svg" width="54" height="54">Chartmates</div>
+<h1>Your friends put you <em>on the chart</em>.</h1><p>Everyone places everyone, in secret. Then the group verdict is revealed. No sign-up.</p></div>
+<div class="r"><img id="art" width="470" height="470"></div>
+<script>
+// reuse the hero illustration from the home page
+fetch('../public/index.html').then(r=>r.text()).then(t=>{const s=t.match(/<svg class="art"[\s\S]*?<\/svg>/)[0].replace('class="art"','xmlns="http://www.w3.org/2000/svg"');document.getElementById('art').src='data:image/svg+xml;charset=utf-8,'+encodeURIComponent(s);});
+</script></body></html>

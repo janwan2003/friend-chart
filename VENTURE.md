@@ -133,3 +133,4 @@ No ads on the reveal.
 
 - 2026-11-21 scout: created from scouting session; evidence from 5 web searches (search-result
   summaries, pages not opened). Not built.
+- 2026-11-21 review: kept p4. Not built; K≈1.6 (scout).
